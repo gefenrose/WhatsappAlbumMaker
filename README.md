@@ -21,6 +21,8 @@ runs entirely in your browser. Nothing is uploaded anywhere.
 - Automatic matching of photos to captions, using the message's own text first
   and falling back to nearby messages from the same sender.
 - Editable album preview — click any caption to correct it.
+- Click or tap any photo to open it full-screen in a lightbox, with
+  previous/next navigation and keyboard support (arrow keys, Escape).
 - Optional "Include videos" toggle to bring videos from the chat into the
   album alongside photos, playable inline.
 - Toggles to show/hide each piece of info per card — date, time, sender name,

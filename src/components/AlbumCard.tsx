@@ -10,6 +10,7 @@ type AlbumCardProps = {
   visibleFields: VisibleFields;
   onCaptionChange: (id: string, caption: string) => void;
   onToggleSelect: (id: string) => void;
+  onOpenLightbox: (id: string) => void;
 };
 
 const CONFIDENCE_LABEL: Record<AlbumItem["confidence"], TranslationKey> = {
@@ -18,7 +19,15 @@ const CONFIDENCE_LABEL: Record<AlbumItem["confidence"], TranslationKey> = {
   low: "confidenceLow",
 };
 
-export function AlbumCard({ item, language, selected, visibleFields, onCaptionChange, onToggleSelect }: AlbumCardProps) {
+export function AlbumCard({
+  item,
+  language,
+  selected,
+  visibleFields,
+  onCaptionChange,
+  onToggleSelect,
+  onOpenLightbox,
+}: AlbumCardProps) {
   const [isEditing, setIsEditing] = useState(false);
 
   const dateTime = [
@@ -41,12 +50,26 @@ export function AlbumCard({ item, language, selected, visibleFields, onCaptionCh
             </div>
           </>
         ) : (
-          <img
-            className="album-card__photo"
-            src={item.media.url}
-            alt={item.caption || item.media.filename}
-            loading="lazy"
-          />
+          <div
+            className="album-card__photo-button"
+            role="button"
+            tabIndex={0}
+            onClick={() => onOpenLightbox(item.id)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onOpenLightbox(item.id);
+              }
+            }}
+            aria-label={t(language, "openPhoto")}
+          >
+            <img
+              className="album-card__photo"
+              src={item.media.url}
+              alt={item.caption || item.media.filename}
+              loading="lazy"
+            />
+          </div>
         )}
         <label className="album-card__select no-print">
           <input

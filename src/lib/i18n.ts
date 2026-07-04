@@ -57,6 +57,10 @@ export const translations = {
     showTime: "Time",
     showSender: "Sender",
     showCaption: "Message text",
+    openPhoto: "Open photo",
+    closeLightbox: "Close",
+    previousPhoto: "Previous photo",
+    nextPhoto: "Next photo",
   },
   he: {
     appTitle: "יוצר אלבום וואטסאפ",
@@ -113,6 +117,10 @@ export const translations = {
     showTime: "שעה",
     showSender: "שולח",
     showCaption: "טקסט ההודעה",
+    openPhoto: "פתח תמונה",
+    closeLightbox: "סגור",
+    previousPhoto: "התמונה הקודמת",
+    nextPhoto: "התמונה הבאה",
   },
 } as const satisfies Record<Language, Record<string, string>>;
 
