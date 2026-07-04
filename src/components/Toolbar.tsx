@@ -12,6 +12,8 @@ type ToolbarProps = {
   visibleCount: number;
   totalCount: number;
   onExportDigitalAlbum: () => void;
+  onExportWord: () => void;
+  onExportPowerPoint: () => void;
   exporting: boolean;
   exportError: string | null;
   onNewImport: () => void;
@@ -48,6 +50,8 @@ export function Toolbar({
   visibleCount,
   totalCount,
   onExportDigitalAlbum,
+  onExportWord,
+  onExportPowerPoint,
   exporting,
   exportError,
   onNewImport,
@@ -138,6 +142,22 @@ export function Toolbar({
           )}
           <button type="button" className="button button--ghost" onClick={onNewImport}>
             {t(language, "newImport")}
+          </button>
+          <button
+            type="button"
+            className="button button--secondary"
+            onClick={onExportWord}
+            disabled={exporting}
+          >
+            {t(language, "exportWord")}
+          </button>
+          <button
+            type="button"
+            className="button button--secondary"
+            onClick={onExportPowerPoint}
+            disabled={exporting}
+          >
+            {t(language, "exportPowerPoint")}
           </button>
           <button
             type="button"

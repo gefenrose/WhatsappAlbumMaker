@@ -1,5 +1,6 @@
 import JSZip from "jszip";
 import type { AlbumItem, Language, VisibleFields } from "../types";
+import { sanitizeDownloadFilename } from "./filenames";
 
 function escapeHtml(text: string): string {
   return text
@@ -12,13 +13,6 @@ function escapeHtml(text: string): string {
 
 function sanitizeFilename(filename: string): string {
   return filename.replace(/[^a-zA-Z0-9._-]/g, "_") || "media";
-}
-
-/** Keeps Unicode (e.g. Hebrew) titles intact for the downloaded filename,
- * only stripping characters that are illegal on common filesystems. */
-function sanitizeDownloadFilename(name: string): string {
-  const cleaned = name.replace(/[\\/:*?"<>|]/g, "-").replace(/\s+/g, " ").trim();
-  return cleaned || "digital-album";
 }
 
 /** Keeps generated filenames unique inside the media/ folder of the zip. */

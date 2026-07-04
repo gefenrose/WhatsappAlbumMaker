@@ -220,6 +220,45 @@ function App() {
     }
   }
 
+  async function handleExportWord() {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const { exportAlbumAsWord } = await import("./lib/exportWord");
+      await exportAlbumAsWord(visibleItems, {
+        title: albumName || t(language, "appTitle"),
+        rtl,
+        noCaptionLabel: t(language, "noCaption"),
+        videoLabel: t(language, "videoLabel"),
+        visibleFields,
+      });
+    } catch {
+      setExportError(t(language, "exportError"));
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  async function handleExportPowerPoint() {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const { exportAlbumAsPowerPoint } = await import("./lib/exportPowerPoint");
+      await exportAlbumAsPowerPoint(visibleItems, {
+        title: albumName || t(language, "appTitle"),
+        rtl,
+        language,
+        noCaptionLabel: t(language, "noCaption"),
+        videoLabel: t(language, "videoLabel"),
+        visibleFields,
+      });
+    } catch {
+      setExportError(t(language, "exportError"));
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const showImporter = status === "idle" || status === "loading" || status === "error";
 
   return (
@@ -273,6 +312,8 @@ function App() {
             visibleCount={visibleItems.length}
             totalCount={albumItems.length}
             onExportDigitalAlbum={handleExportDigitalAlbum}
+            onExportWord={handleExportWord}
+            onExportPowerPoint={handleExportPowerPoint}
             exporting={exporting}
             exportError={exportError}
             onNewImport={handleNewImport}

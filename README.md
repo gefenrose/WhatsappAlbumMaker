@@ -44,6 +44,11 @@ runs entirely in your browser. Nothing is uploaded anywhere.
   with its date, sender, and caption. Since it's just an HTML page, videos
   play natively, and photos open in the same click-to-magnify lightbox as
   the in-app preview (with previous/next navigation).
+- **Export as Word** (`.docx`) and **Export as PowerPoint** (`.pptx`), for
+  sharing the album as a document or presentation. Both include one photo
+  per page/slide with date, sender, and caption, honor the "Show:" field
+  toggles, and support RTL text. Since neither format can embed a truly
+  playable video, video items show as a labeled placeholder instead.
 
 ## Getting started
 
@@ -94,16 +99,20 @@ opened locally) — no server-side code is required.
 5. Use the filters in the toolbar to review "missing captions" or focus on a
    specific sender. Use the "Show:" toggles to hide date, time, sender, or
    message text if you'd rather keep the album simpler.
-6. When you're happy with the album, click **Export Digital Album** to
-   download a `.zip` named after the chat itself, which you can keep, share,
-   or archive — unzip it and open `index.html` to view the album offline in
-   any browser.
+6. When you're happy with the album, choose an export:
+   - **Export Digital Album** downloads a `.zip` named after the chat itself,
+     which you can keep, share, or archive — unzip it and open `index.html`
+     to view the album offline in any browser.
+   - **Export as Word** or **Export as PowerPoint** downloads a `.docx` or
+     `.pptx` file instead, for sharing as a document or presentation.
 
 ## Tech stack
 
 - [Vite](https://vitejs.dev/) + [React](https://react.dev/) + TypeScript
 - [JSZip](https://stuk.github.io/jszip/) for in-browser ZIP extraction and
   for building the exported digital album `.zip`
+- [docx](https://docx.js.org/) for Word export, [pptxgenjs](https://gitbrent.github.io/PptxGenJS/)
+  for PowerPoint export — both lazy-loaded only when you use that export
 - Plain CSS (no UI framework), mobile-first, with RTL support
 - No backend, no database, no analytics
 
@@ -123,6 +132,10 @@ src/
     parseWhatsAppChat.ts      WhatsApp chat text parser
     buildAlbumItems.ts        Photo <-> caption matching logic
     exportDigitalAlbum.ts     Builds the exported album .zip (HTML + media) via JSZip
+    exportWord.ts             Builds the exported .docx via the docx library
+    exportPowerPoint.ts       Builds the exported .pptx via pptxgenjs
+    imageConversion.ts        Canvas-based image decoding + PNG conversion, shared by both
+    filenames.ts              Shared download-filename sanitizing
     i18n.ts                   English/Hebrew strings + RTL helper
   types.ts                    Shared TypeScript types
   styles.css                  Global styles, responsive grid
