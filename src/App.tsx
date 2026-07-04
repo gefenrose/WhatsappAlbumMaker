@@ -36,7 +36,7 @@ function App() {
   const [albumItems, setAlbumItems] = useState<AlbumItem[]>([]);
   const [albumName, setAlbumName] = useState("");
   const [filter, setFilter] = useState<AlbumFilter>("all");
-  const [senderFilter, setSenderFilter] = useState<string | null>(null);
+  const [senderFilter, setSenderFilter] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -114,7 +114,7 @@ function App() {
       setAlbumItems(items);
       setAlbumName(extractGroupName(messages) ?? deriveAlbumNameFromZipFilename(file.name) ?? t(language, "appTitle"));
       setFilter("all");
-      setSenderFilter(null);
+      setSenderFilter([]);
       setSelectedIds(new Set());
       setIncludeVideos(false);
       setVisibleFields(DEFAULT_VISIBLE_FIELDS);
@@ -139,7 +139,7 @@ function App() {
     setStatus("idle");
     setErrorMessage(null);
     setFilter("all");
-    setSenderFilter(null);
+    setSenderFilter([]);
     setExportError(null);
     setSelectedIds(new Set());
     setIncludeVideos(false);
@@ -165,6 +165,10 @@ function App() {
 
   function handleToggleField(field: keyof VisibleFields) {
     setVisibleFields((prev) => ({ ...prev, [field]: !prev[field] }));
+  }
+
+  function handleToggleSender(sender: string) {
+    setSenderFilter((prev) => (prev.includes(sender) ? prev.filter((s) => s !== sender) : [...prev, sender]));
   }
 
   function clearUndo() {
@@ -264,7 +268,8 @@ function App() {
             onFilterChange={setFilter}
             senders={senders}
             senderFilter={senderFilter}
-            onSenderFilterChange={setSenderFilter}
+            onToggleSender={handleToggleSender}
+            onClearSenderFilter={() => setSenderFilter([])}
             visibleCount={visibleItems.length}
             totalCount={albumItems.length}
             onExportDigitalAlbum={handleExportDigitalAlbum}

@@ -7,7 +7,7 @@ import { Lightbox } from "./Lightbox";
 type AlbumPreviewProps = {
   items: AlbumItem[];
   filter: AlbumFilter;
-  senderFilter: string | null;
+  senderFilter: string[];
   includeVideos: boolean;
   visibleFields: VisibleFields;
   language: Language;
@@ -19,12 +19,12 @@ type AlbumPreviewProps = {
 export function filterAlbumItems(
   items: AlbumItem[],
   filter: AlbumFilter,
-  senderFilter: string | null,
+  senderFilter: string[],
   includeVideos: boolean
 ): AlbumItem[] {
   return items.filter((item) => {
     if (!includeVideos && item.media.type === "video") return false;
-    if (senderFilter && item.sender !== senderFilter) return false;
+    if (senderFilter.length > 0 && (!item.sender || !senderFilter.includes(item.sender))) return false;
     if (filter === "with-caption") return item.caption.trim() !== "";
     if (filter === "missing-caption") return item.caption.trim() === "";
     return true;

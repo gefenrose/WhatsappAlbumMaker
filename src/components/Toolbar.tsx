@@ -6,8 +6,9 @@ type ToolbarProps = {
   filter: AlbumFilter;
   onFilterChange: (filter: AlbumFilter) => void;
   senders: string[];
-  senderFilter: string | null;
-  onSenderFilterChange: (sender: string | null) => void;
+  senderFilter: string[];
+  onToggleSender: (sender: string) => void;
+  onClearSenderFilter: () => void;
   visibleCount: number;
   totalCount: number;
   onExportDigitalAlbum: () => void;
@@ -42,7 +43,8 @@ export function Toolbar({
   onFilterChange,
   senders,
   senderFilter,
-  onSenderFilterChange,
+  onToggleSender,
+  onClearSenderFilter,
   visibleCount,
   totalCount,
   onExportDigitalAlbum,
@@ -73,19 +75,25 @@ export function Toolbar({
           ))}
 
           {senders.length > 1 && (
-            <select
-              className="select"
-              value={senderFilter ?? ""}
-              onChange={(event) => onSenderFilterChange(event.target.value || null)}
-              aria-label={t(language, "filterBySender")}
-            >
-              <option value="">{t(language, "allSenders")}</option>
+            <div className="toolbar__senders" role="group" aria-label={t(language, "filterBySender")}>
+              <button
+                type="button"
+                className={`chip${senderFilter.length === 0 ? " chip--active" : ""}`}
+                onClick={onClearSenderFilter}
+              >
+                {t(language, "allSenders")}
+              </button>
               {senders.map((sender) => (
-                <option key={sender} value={sender}>
+                <button
+                  key={sender}
+                  type="button"
+                  className={`chip${senderFilter.includes(sender) ? " chip--active" : ""}`}
+                  onClick={() => onToggleSender(sender)}
+                >
                   {sender}
-                </option>
+                </button>
               ))}
-            </select>
+            </div>
           )}
 
           {hasVideos && (

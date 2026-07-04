@@ -28,7 +28,8 @@ runs entirely in your browser. Nothing is uploaded anywhere.
 - Toggles to show/hide each piece of info per card — date, time, sender name,
   and message text — independently, both on screen and in the exported album.
 - Select photos and delete them from the album, with a one-click Undo.
-- Filter by "all / with captions / missing captions" and by sender.
+- Filter by "all / with captions / missing captions", and by one or more
+  senders at once (toggle any combination of senders on or off).
 - The exported album is automatically named after the WhatsApp chat itself
   (pulled from a "created group" message when available, otherwise from the
   exported `.zip`'s own filename).

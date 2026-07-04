@@ -165,7 +165,6 @@ function buildHtmlDocument(
   .lightbox__nav { top: 50%; transform: translateY(-50%); width: 48px; height: 48px; font-size: 2rem; line-height: 1; }
   .lightbox__nav--prev { inset-inline-start: 16px; }
   .lightbox__nav--next { inset-inline-end: 16px; }
-  html[dir="rtl"] .lightbox__nav { transform: translateY(-50%) scaleX(-1); }
 </style>
 </head>
 <body>
@@ -185,6 +184,7 @@ function buildHtmlDocument(
 
   <script>
     (function () {
+      var isRtl = ${rtl ? "true" : "false"};
       var photos = ${serializeForInlineScript(photoEntries)};
       var lightbox = document.getElementById("lightbox");
       var image = document.getElementById("lightbox-image");
@@ -253,8 +253,10 @@ function buildHtmlDocument(
       document.addEventListener("keydown", function (event) {
         if (!lightbox.classList.contains("is-open")) return;
         if (event.key === "Escape") close();
-        if (event.key === "ArrowRight") showNext();
-        if (event.key === "ArrowLeft") showPrev();
+        // The prev/next buttons swap sides in RTL (inset-inline-start/end),
+        // so the arrow keys must follow the same physical left/right mapping.
+        if (event.key === "ArrowRight") { if (isRtl) showPrev(); else showNext(); }
+        if (event.key === "ArrowLeft") { if (isRtl) showNext(); else showPrev(); }
       });
     })();
   </script>

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import type { AlbumItem, Language } from "../types";
-import { t } from "../lib/i18n";
+import { t, isRtl } from "../lib/i18n";
 
 type LightboxProps = {
   item: AlbumItem;
@@ -13,6 +13,8 @@ type LightboxProps = {
 };
 
 export function Lightbox({ item, language, hasPrev, hasNext, onClose, onPrev, onNext }: LightboxProps) {
+  const rtl = isRtl(language);
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -22,14 +24,19 @@ export function Lightbox({ item, language, hasPrev, hasNext, onClose, onPrev, on
   }, []);
 
   useEffect(() => {
+    // The prev/next buttons swap sides in RTL (via inset-inline-start/end),
+    // so the arrow keys must follow the same physical left/right mapping
+    // rather than a fixed "right always means next" assumption.
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") onClose();
-      if (event.key === "ArrowRight" && hasNext) onNext();
-      if (event.key === "ArrowLeft" && hasPrev) onPrev();
+      const rightAction = rtl ? { enabled: hasPrev, run: onPrev } : { enabled: hasNext, run: onNext };
+      const leftAction = rtl ? { enabled: hasNext, run: onNext } : { enabled: hasPrev, run: onPrev };
+      if (event.key === "ArrowRight" && rightAction.enabled) rightAction.run();
+      if (event.key === "ArrowLeft" && leftAction.enabled) leftAction.run();
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, onNext, onPrev, hasNext, hasPrev]);
+  }, [onClose, onNext, onPrev, hasNext, hasPrev, rtl]);
 
   const dateTime = [item.dateRaw, item.timeRaw].filter(Boolean).join(" · ");
   const hasCaptionPanel = Boolean(dateTime || item.sender || item.caption);
