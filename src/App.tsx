@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { AlbumFilter, AlbumItem, Language, MediaFile } from "./types";
-import { extractWhatsAppZip, revokeMediaUrls, ZipImportError } from "./lib/zipUtils";
-import { parseWhatsAppChat } from "./lib/parseWhatsAppChat";
+import type { AlbumFilter, AlbumItem, Language, MediaFile, VisibleFields } from "./types";
+import { deriveAlbumNameFromZipFilename, extractWhatsAppZip, revokeMediaUrls, ZipImportError } from "./lib/zipUtils";
+import { extractGroupName, parseWhatsAppChat } from "./lib/parseWhatsAppChat";
 import { buildAlbumItems } from "./lib/buildAlbumItems";
 import { t, isRtl, type TranslationKey } from "./lib/i18n";
 import { ZipImporter } from "./components/ZipImporter";
@@ -17,6 +17,7 @@ type UndoState = {
 };
 
 const UNDO_TIMEOUT_MS = 8000;
+const DEFAULT_VISIBLE_FIELDS: VisibleFields = { date: true, time: true, sender: true, caption: true };
 
 const EXPORT_STEP_KEYS: TranslationKey[] = [
   "exportStep1",
@@ -33,12 +34,15 @@ function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [progress, setProgress] = useState(0);
   const [albumItems, setAlbumItems] = useState<AlbumItem[]>([]);
+  const [albumName, setAlbumName] = useState("");
   const [filter, setFilter] = useState<AlbumFilter>("all");
   const [senderFilter, setSenderFilter] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [undoState, setUndoState] = useState<UndoState | null>(null);
+  const [includeVideos, setIncludeVideos] = useState(false);
+  const [visibleFields, setVisibleFields] = useState<VisibleFields>(DEFAULT_VISIBLE_FIELDS);
 
   const mediaFilesRef = useRef<MediaFile[]>([]);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -72,9 +76,11 @@ function App() {
   }, [albumItems]);
 
   const visibleItems = useMemo(
-    () => filterAlbumItems(albumItems, filter, senderFilter),
-    [albumItems, filter, senderFilter]
+    () => filterAlbumItems(albumItems, filter, senderFilter, includeVideos),
+    [albumItems, filter, senderFilter, includeVideos]
   );
+
+  const hasVideos = useMemo(() => albumItems.some((item) => item.media.type === "video"), [albumItems]);
 
   async function handleFileSelected(file: File) {
     setStatus("loading");
@@ -106,9 +112,12 @@ function App() {
       mediaFilesRef.current = mediaFiles;
 
       setAlbumItems(items);
+      setAlbumName(extractGroupName(messages) ?? deriveAlbumNameFromZipFilename(file.name) ?? t(language, "appTitle"));
       setFilter("all");
       setSenderFilter(null);
       setSelectedIds(new Set());
+      setIncludeVideos(false);
+      setVisibleFields(DEFAULT_VISIBLE_FIELDS);
       clearUndo();
       setStatus("ready");
     } catch (error) {
@@ -126,12 +135,15 @@ function App() {
     revokeMediaUrls(mediaFilesRef.current);
     mediaFilesRef.current = [];
     setAlbumItems([]);
+    setAlbumName("");
     setStatus("idle");
     setErrorMessage(null);
     setFilter("all");
     setSenderFilter(null);
     setExportError(null);
     setSelectedIds(new Set());
+    setIncludeVideos(false);
+    setVisibleFields(DEFAULT_VISIBLE_FIELDS);
     clearUndo();
   }
 
@@ -149,6 +161,10 @@ function App() {
       }
       return next;
     });
+  }
+
+  function handleToggleField(field: keyof VisibleFields) {
+    setVisibleFields((prev) => ({ ...prev, [field]: !prev[field] }));
   }
 
   function clearUndo() {
@@ -176,19 +192,17 @@ function App() {
     clearUndo();
   }
 
-  function handlePrint() {
-    window.print();
-  }
-
-  async function handleExportPptx() {
+  async function handleExportDigitalAlbum() {
     setExporting(true);
     setExportError(null);
     try {
-      const { exportAlbumAsPowerPoint } = await import("./lib/exportPowerPoint");
-      await exportAlbumAsPowerPoint(visibleItems, {
-        title: t(language, "appTitle"),
+      const { exportDigitalAlbum } = await import("./lib/exportDigitalAlbum");
+      await exportDigitalAlbum(visibleItems, {
+        title: albumName || t(language, "appTitle"),
         rtl,
         language,
+        noCaptionLabel: t(language, "noCaption"),
+        visibleFields,
       });
     } catch {
       setExportError(t(language, "exportError"));
@@ -232,6 +246,7 @@ function App() {
                 <li key={key}>{t(language, key)}</li>
               ))}
             </ol>
+            <p className="export-instructions__note">{t(language, "exportScopeNote")}</p>
           </section>
         </main>
       )}
@@ -247,19 +262,25 @@ function App() {
             onSenderFilterChange={setSenderFilter}
             visibleCount={visibleItems.length}
             totalCount={albumItems.length}
-            onPrint={handlePrint}
-            onExportPptx={handleExportPptx}
+            onExportDigitalAlbum={handleExportDigitalAlbum}
             exporting={exporting}
             exportError={exportError}
             onNewImport={handleNewImport}
             selectedCount={selectedIds.size}
             onDeleteSelected={handleDeleteSelected}
+            hasVideos={hasVideos}
+            includeVideos={includeVideos}
+            onIncludeVideosChange={setIncludeVideos}
+            visibleFields={visibleFields}
+            onToggleField={handleToggleField}
           />
           <main className="app__main">
             <AlbumPreview
               items={albumItems}
               filter={filter}
               senderFilter={senderFilter}
+              includeVideos={includeVideos}
+              visibleFields={visibleFields}
               language={language}
               selectedIds={selectedIds}
               onCaptionChange={handleCaptionChange}

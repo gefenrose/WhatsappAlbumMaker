@@ -1,8 +1,9 @@
 # WhatsApp Album Maker
 
-A local-first web app that turns a WhatsApp group chat export into a printable
-family photo album. Everything — unzipping, parsing, matching captions, and
-exporting — runs entirely in your browser. Nothing is uploaded anywhere.
+A local-first web app that turns a WhatsApp group chat export into a digital
+keepsake photo (and video) album you can export and share as a self-contained
+`.zip`. Everything — unzipping, parsing, matching captions, and exporting —
+runs entirely in your browser. Nothing is uploaded anywhere.
 
 ## Privacy
 
@@ -20,16 +21,25 @@ exporting — runs entirely in your browser. Nothing is uploaded anywhere.
 - Automatic matching of photos to captions, using the message's own text first
   and falling back to nearby messages from the same sender.
 - Editable album preview — click any caption to correct it.
+- Optional "Include videos" toggle to bring videos from the chat into the
+  album alongside photos, playable inline.
+- Toggles to show/hide each piece of info per card — date, time, sender name,
+  and message text — independently, both on screen and in the exported album.
 - Select photos and delete them from the album, with a one-click Undo.
 - Filter by "all / with captions / missing captions" and by sender.
+- The exported album is automatically named after the WhatsApp chat itself
+  (pulled from a "created group" message when available, otherwise from the
+  exported `.zip`'s own filename).
 - Opens in Hebrew by default, with a one-click toggle to English (and back).
   Layout mirrors to RTL/LTR automatically.
 - In-app step-by-step instructions for exporting a chat from WhatsApp, shown
   right above the import box.
-- Print-friendly layout — use your browser's print dialog to save as PDF, with
-  page breaks that never cut a photo card in half.
-- One-click export to a PowerPoint (`.pptx`) presentation, with one slide per
-  photo (photo, date, time, sender, caption), Hebrew/RTL-aware text.
+- One-click **Export Digital Album**: downloads a self-contained `.zip`
+  containing an `index.html` viewer plus a `media/` folder with all the
+  photos and videos. Unzip it anywhere and open `index.html` in any browser —
+  no internet connection or app required — to browse every photo and video
+  with its date, sender, and caption. Since it's just an HTML page, videos
+  play natively.
 
 ## Getting started
 
@@ -62,6 +72,12 @@ opened locally) — no server-side code is required.
 6. Open this app and drag the `.zip` file into the import area, or click
    **Choose ZIP file** to select it.
 
+> **Please note:** the exported `.zip` only includes photos and videos that
+> have already been downloaded and are visible in that WhatsApp chat — not
+> your phone's full camera roll, other chats, or media still marked "tap to
+> download." If needed, open those items in WhatsApp first so they're saved
+> to the chat before exporting.
+
 ## Using the app
 
 1. Import your exported `.zip`.
@@ -72,18 +88,18 @@ opened locally) — no server-side code is required.
    ("suggested caption") or couldn't find a caption at all ("needs caption").
 4. Click any caption to edit it manually.
 5. Use the filters in the toolbar to review "missing captions" or focus on a
-   specific sender.
-6. When you're happy with the album:
-   - Click **Print / Save as PDF** to use your browser's native print dialog.
-   - Click **Export as PowerPoint** to download a `.pptx` file with one slide
-     per photo, ready to open in Microsoft PowerPoint, Apple Keynote, or
-     Google Slides.
+   specific sender. Use the "Show:" toggles to hide date, time, sender, or
+   message text if you'd rather keep the album simpler.
+6. When you're happy with the album, click **Export Digital Album** to
+   download a `.zip` named after the chat itself, which you can keep, share,
+   or archive — unzip it and open `index.html` to view the album offline in
+   any browser.
 
 ## Tech stack
 
 - [Vite](https://vitejs.dev/) + [React](https://react.dev/) + TypeScript
-- [JSZip](https://stuk.github.io/jszip/) for in-browser ZIP extraction
-- [pptxgenjs](https://gitbrent.github.io/PptxGenJS/) for PowerPoint export
+- [JSZip](https://stuk.github.io/jszip/) for in-browser ZIP extraction and
+  for building the exported digital album `.zip`
 - Plain CSS (no UI framework), mobile-first, with RTL support
 - No backend, no database, no analytics
 
@@ -97,23 +113,23 @@ src/
     AlbumPreview.tsx         Grid + filtering of album items
     AlbumCard.tsx            Single photo card (photo, date, sender, caption)
     CaptionEditor.tsx        Inline caption editing UI
-    Toolbar.tsx              Filters, language switch, print/export actions
+    Toolbar.tsx              Filters, language switch, export action
   lib/
     zipUtils.ts               ZIP extraction, media file discovery
     parseWhatsAppChat.ts      WhatsApp chat text parser
     buildAlbumItems.ts        Photo <-> caption matching logic
-    exportPowerPoint.ts       .pptx generation via pptxgenjs
+    exportDigitalAlbum.ts     Builds the exported album .zip (HTML + media) via JSZip
     i18n.ts                   English/Hebrew strings + RTL helper
   types.ts                    Shared TypeScript types
-  styles.css                  Global styles, responsive grid, print rules
+  styles.css                  Global styles, responsive grid
 ```
 
 ## Notes & limitations
 
 - The parser supports the most common WhatsApp export formats. Extremely
   unusual locales/date formats may need small parser tweaks.
-- Videos are extracted from the ZIP but are not currently placed into the
-  photo album grid (the album is photo-focused, per the original chat's
-  intent as a printable album).
+- Videos are off by default in the on-screen album (photo-first) — turn on
+  "Include videos" in the toolbar to bring them into view and into the
+  exported digital album.
 - Large exports (many hundreds of photos) may take a few seconds to process
   since everything runs on-device.

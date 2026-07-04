@@ -112,3 +112,21 @@ export function revokeMediaUrls(mediaFiles: MediaFile[]): void {
     URL.revokeObjectURL(media.url);
   }
 }
+
+// WhatsApp names shared exports like "WhatsApp Chat with <Chat Name>.zip";
+// fall back to this when the chat text has no "created group" message to
+// pull the name from (e.g. it started long before the exported window).
+const ZIP_FILENAME_PREFIXES = [/^whatsapp chat with\s+/i, /^whatsapp chat\s*-\s*/i];
+
+export function deriveAlbumNameFromZipFilename(zipFileName: string): string | undefined {
+  const withoutExt = zipFileName.replace(/\.zip$/i, "").trim();
+  if (!withoutExt) return undefined;
+
+  for (const pattern of ZIP_FILENAME_PREFIXES) {
+    if (pattern.test(withoutExt)) {
+      const stripped = withoutExt.replace(pattern, "").trim();
+      if (stripped) return stripped;
+    }
+  }
+  return withoutExt;
+}

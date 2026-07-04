@@ -169,3 +169,30 @@ function finalizeMessage(message: ChatMessage): void {
   message.mediaFilenames = filenames;
   message.text = cleanedText.trim();
 }
+
+// Matches system messages like `Mom created group "Family Trip 2026"` or the
+// Hebrew equivalent, using either straight or curly quotes around the name.
+const GROUP_NAME_PATTERNS = [
+  /created group\s*["“”'](.+?)["“”']/i,
+  /named this group\s*["“”'](.+?)["“”']/i,
+  /יצר[הו]? את הקבוצה\s*["“”'](.+?)["“”']/,
+  /שינה? את שם הקבוצה[^"“”']*["“”'](.+?)["“”']\s*$/,
+];
+
+/**
+ * Best-effort extraction of the WhatsApp group's name from its own system
+ * messages, since the chat text export doesn't otherwise carry a group title.
+ */
+export function extractGroupName(messages: ChatMessage[]): string | undefined {
+  for (const message of messages) {
+    if (!message.isSystemMessage) continue;
+    for (const pattern of GROUP_NAME_PATTERNS) {
+      const match = message.text.match(pattern);
+      if (match?.[1]) {
+        const name = stripInvisible(match[1]);
+        if (name) return name;
+      }
+    }
+  }
+  return undefined;
+}

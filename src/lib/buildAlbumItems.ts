@@ -60,7 +60,7 @@ export function buildAlbumItems(
 
       usedFilenames.add(normalizeFilename(media.filename).toLowerCase());
 
-      if (media.type !== "image") continue;
+      if (media.type === "other") continue;
 
       if (message.text.trim() !== "") {
         items.push({
@@ -104,12 +104,12 @@ export function buildAlbumItems(
     }
   });
 
-  // Any image files not referenced by any parsed message still make it into
-  // the album so the user can caption them manually.
+  // Any photo/video files not referenced by any parsed message still make it
+  // into the album so the user can caption them manually.
   for (const media of mediaFiles) {
     const key = normalizeFilename(media.filename).toLowerCase();
     if (usedFilenames.has(key)) continue;
-    if (media.type !== "image") continue;
+    if (media.type === "other") continue;
     items.push({
       id: nextId(),
       media,

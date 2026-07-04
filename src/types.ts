@@ -30,3 +30,10 @@ export type AlbumItem = {
 export type Language = "en" | "he";
 
 export type AlbumFilter = "all" | "with-caption" | "missing-caption";
+
+export type VisibleFields = {
+  date: boolean;
+  time: boolean;
+  sender: boolean;
+  caption: boolean;
+};

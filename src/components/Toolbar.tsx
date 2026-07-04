@@ -1,4 +1,4 @@
-import type { AlbumFilter, Language } from "../types";
+import type { AlbumFilter, Language, VisibleFields } from "../types";
 import { t } from "../lib/i18n";
 
 type ToolbarProps = {
@@ -10,19 +10,30 @@ type ToolbarProps = {
   onSenderFilterChange: (sender: string | null) => void;
   visibleCount: number;
   totalCount: number;
-  onPrint: () => void;
-  onExportPptx: () => void;
+  onExportDigitalAlbum: () => void;
   exporting: boolean;
   exportError: string | null;
   onNewImport: () => void;
   selectedCount: number;
   onDeleteSelected: () => void;
+  hasVideos: boolean;
+  includeVideos: boolean;
+  onIncludeVideosChange: (value: boolean) => void;
+  visibleFields: VisibleFields;
+  onToggleField: (field: keyof VisibleFields) => void;
 };
 
 const FILTERS: { value: AlbumFilter; labelKey: "filterAll" | "filterWithCaption" | "filterMissingCaption" }[] = [
   { value: "all", labelKey: "filterAll" },
   { value: "with-caption", labelKey: "filterWithCaption" },
   { value: "missing-caption", labelKey: "filterMissingCaption" },
+];
+
+const FIELD_TOGGLES: { field: keyof VisibleFields; labelKey: "showDate" | "showTime" | "showSender" | "showCaption" }[] = [
+  { field: "date", labelKey: "showDate" },
+  { field: "time", labelKey: "showTime" },
+  { field: "sender", labelKey: "showSender" },
+  { field: "caption", labelKey: "showCaption" },
 ];
 
 export function Toolbar({
@@ -34,13 +45,17 @@ export function Toolbar({
   onSenderFilterChange,
   visibleCount,
   totalCount,
-  onPrint,
-  onExportPptx,
+  onExportDigitalAlbum,
   exporting,
   exportError,
   onNewImport,
   selectedCount,
   onDeleteSelected,
+  hasVideos,
+  includeVideos,
+  onIncludeVideosChange,
+  visibleFields,
+  onToggleField,
 }: ToolbarProps) {
   return (
     <div className="toolbar no-print">
@@ -72,6 +87,33 @@ export function Toolbar({
               ))}
             </select>
           )}
+
+          {hasVideos && (
+            <label className="checkbox-toggle">
+              <input
+                type="checkbox"
+                checked={includeVideos}
+                onChange={(event) => onIncludeVideosChange(event.target.checked)}
+              />
+              {t(language, "includeVideos")}
+            </label>
+          )}
+        </div>
+      </div>
+
+      <div className="toolbar__row">
+        <div className="toolbar__field-toggles">
+          <span className="toolbar__field-toggles-label">{t(language, "showFieldsLabel")}</span>
+          {FIELD_TOGGLES.map(({ field, labelKey }) => (
+            <label key={field} className="checkbox-toggle">
+              <input
+                type="checkbox"
+                checked={visibleFields[field]}
+                onChange={() => onToggleField(field)}
+              />
+              {t(language, labelKey)}
+            </label>
+          ))}
         </div>
       </div>
 
@@ -89,16 +131,13 @@ export function Toolbar({
           <button type="button" className="button button--ghost" onClick={onNewImport}>
             {t(language, "newImport")}
           </button>
-          <button type="button" className="button button--secondary" onClick={onPrint}>
-            {t(language, "print")}
-          </button>
           <button
             type="button"
             className="button button--primary"
-            onClick={onExportPptx}
+            onClick={onExportDigitalAlbum}
             disabled={exporting}
           >
-            {exporting ? t(language, "exporting") : t(language, "exportPptx")}
+            {exporting ? t(language, "exporting") : t(language, "exportDigitalAlbum")}
           </button>
         </div>
       </div>
