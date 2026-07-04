@@ -41,7 +41,8 @@ runs entirely in your browser. Nothing is uploaded anywhere.
   photos and videos. Unzip it anywhere and open `index.html` in any browser —
   no internet connection or app required — to browse every photo and video
   with its date, sender, and caption. Since it's just an HTML page, videos
-  play natively.
+  play natively, and photos open in the same click-to-magnify lightbox as
+  the in-app preview (with previous/next navigation).
 
 ## Getting started
 

@@ -203,6 +203,11 @@ function App() {
         language,
         noCaptionLabel: t(language, "noCaption"),
         visibleFields,
+        lightboxLabels: {
+          close: t(language, "closeLightbox"),
+          previous: t(language, "previousPhoto"),
+          next: t(language, "nextPhoto"),
+        },
       });
     } catch {
       setExportError(t(language, "exportError"));
