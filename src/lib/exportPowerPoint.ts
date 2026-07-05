@@ -1,7 +1,8 @@
+import JSZip from "jszip";
 import pptxgen from "pptxgenjs";
 import type { AlbumItem, Language, VisibleFields } from "../types";
 import { convertImageToPng, fitWithinBox } from "./imageConversion";
-import { sanitizeDownloadFilename } from "./filenames";
+import { sanitizeDownloadFilename, sanitizeMediaFilename, uniqueFilename } from "./filenames";
 
 const SLIDE_WIDTH_IN = 13.33;
 const IMAGE_BOX = { x: 1.665, y: 0.4, w: 10.0, h: 4.9 };
@@ -26,11 +27,17 @@ export async function exportAlbumAsPowerPoint(
   pptx.rtlMode = rtl;
   pptx.title = options.title;
 
+  const usedMediaFilenames = new Set<string>();
+  const videoLinks: { filename: string; blob: Blob }[] = [];
+
   for (const item of albumItems) {
     const slide = pptx.addSlide();
     slide.background = { color: "FFFFFF" };
 
     if (item.media.type === "video") {
+      const filename = uniqueFilename(sanitizeMediaFilename(item.media.filename), usedMediaFilenames);
+      videoLinks.push({ filename, blob: item.media.blob });
+
       slide.addShape(pptx.ShapeType.rect, {
         x: IMAGE_BOX.x,
         y: IMAGE_BOX.y,
@@ -47,7 +54,9 @@ export async function exportAlbumAsPowerPoint(
         align: "center",
         valign: "middle",
         fontSize: 20,
-        color: "555555",
+        color: "1155CC",
+        underline: {},
+        hyperlink: { url: `media/${filename}` },
       });
     } else {
       try {
@@ -121,5 +130,37 @@ export async function exportAlbumAsPowerPoint(
     }
   }
 
-  await pptx.writeFile({ fileName: `${sanitizeDownloadFilename(options.title)}.pptx` });
+  const safeTitle = sanitizeDownloadFilename(options.title);
+
+  if (videoLinks.length === 0) {
+    await pptx.writeFile({ fileName: `${safeTitle}.pptx` });
+    return;
+  }
+
+  // Videos can't be embedded as playable media reliably across PowerPoint,
+  // Keynote, and Google Slides, so they're linked instead — bundling the
+  // presentation with a sibling media/ folder in a zip keeps that link
+  // resolvable once extracted.
+  const pptxBlob = (await pptx.write({ outputType: "blob" })) as Blob;
+
+  const zip = new JSZip();
+  zip.file(`${safeTitle}.pptx`, pptxBlob);
+  const mediaFolder = zip.folder("media");
+  if (!mediaFolder) throw new Error("Could not create media folder in zip");
+  for (const { filename, blob } of videoLinks) {
+    mediaFolder.file(filename, blob);
+  }
+
+  const zipBlob = await zip.generateAsync({ type: "blob" });
+  const url = URL.createObjectURL(zipBlob);
+  try {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${safeTitle} (PowerPoint).zip`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }

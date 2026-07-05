@@ -47,8 +47,11 @@ runs entirely in your browser. Nothing is uploaded anywhere.
 - **Export as Word** (`.docx`) and **Export as PowerPoint** (`.pptx`), for
   sharing the album as a document or presentation. Both include one photo
   per page/slide with date, sender, and caption, honor the "Show:" field
-  toggles, and support RTL text. Since neither format can embed a truly
-  playable video, video items show as a labeled placeholder instead.
+  toggles, and support RTL text. Neither format can embed a truly playable
+  video, so video items appear as a clickable link instead — if the export
+  includes any videos, the download becomes a `.zip` containing the
+  document/presentation plus a `media/` folder, and the link opens the
+  video file once you've unzipped it (keep the two together).
 
 ## Getting started
 
@@ -104,7 +107,10 @@ opened locally) — no server-side code is required.
      which you can keep, share, or archive — unzip it and open `index.html`
      to view the album offline in any browser.
    - **Export as Word** or **Export as PowerPoint** downloads a `.docx` or
-     `.pptx` file instead, for sharing as a document or presentation.
+     `.pptx` file instead, for sharing as a document or presentation. If the
+     export includes videos, you'll get a `.zip` (document + `media/`
+     folder) instead of a single file — unzip it and keep both together so
+     the video links work.
 
 ## Tech stack
 
@@ -146,7 +152,8 @@ src/
 - The parser supports the most common WhatsApp export formats. Extremely
   unusual locales/date formats may need small parser tweaks.
 - Videos are off by default in the on-screen album (photo-first) — turn on
-  "Include videos" in the toolbar to bring them into view and into the
-  exported digital album.
+  "Include videos" in the toolbar to bring them into view and into any
+  export. In Word/PowerPoint, a video's link only resolves if the `.docx`/
+  `.pptx` and its `media/` folder stay in the same place after unzipping.
 - Large exports (many hundreds of photos) may take a few seconds to process
   since everything runs on-device.

@@ -1,6 +1,6 @@
 import JSZip from "jszip";
 import type { AlbumItem, Language, VisibleFields } from "../types";
-import { sanitizeDownloadFilename } from "./filenames";
+import { sanitizeDownloadFilename, sanitizeMediaFilename, uniqueFilename } from "./filenames";
 
 function escapeHtml(text: string): string {
   return text
@@ -9,29 +9,6 @@ function escapeHtml(text: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
-}
-
-function sanitizeFilename(filename: string): string {
-  return filename.replace(/[^a-zA-Z0-9._-]/g, "_") || "media";
-}
-
-/** Keeps generated filenames unique inside the media/ folder of the zip. */
-function uniqueFilename(desired: string, used: Set<string>): string {
-  if (!used.has(desired)) {
-    used.add(desired);
-    return desired;
-  }
-  const dotIndex = desired.lastIndexOf(".");
-  const base = dotIndex === -1 ? desired : desired.slice(0, dotIndex);
-  const ext = dotIndex === -1 ? "" : desired.slice(dotIndex);
-  let counter = 1;
-  let candidate = `${base}-${counter}${ext}`;
-  while (used.has(candidate)) {
-    counter += 1;
-    candidate = `${base}-${counter}${ext}`;
-  }
-  used.add(candidate);
-  return candidate;
 }
 
 type PhotoEntry = {
@@ -277,7 +254,7 @@ export async function exportDigitalAlbum(
   const photoEntries: PhotoEntry[] = [];
   const cardsHtml = albumItems
     .map((item) => {
-      const filename = uniqueFilename(sanitizeFilename(item.media.filename), usedFilenames);
+      const filename = uniqueFilename(sanitizeMediaFilename(item.media.filename), usedFilenames);
       mediaFolder.file(filename, item.media.blob);
 
       let photoIndex: number | null = null;

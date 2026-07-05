@@ -1,7 +1,8 @@
-import { AlignmentType, Document, HeadingLevel, ImageRun, Packer, Paragraph, TextRun } from "docx";
+import JSZip from "jszip";
+import { AlignmentType, Document, ExternalHyperlink, HeadingLevel, ImageRun, Packer, Paragraph, TextRun } from "docx";
 import type { AlbumItem, VisibleFields } from "../types";
 import { convertImageToPng, fitWithinBox } from "./imageConversion";
-import { sanitizeDownloadFilename } from "./filenames";
+import { sanitizeDownloadFilename, sanitizeMediaFilename, uniqueFilename } from "./filenames";
 
 const IMAGE_BOX = { width: 500, height: 500 };
 
@@ -9,22 +10,41 @@ function paragraphAlignment(rtl: boolean) {
   return rtl ? AlignmentType.RIGHT : AlignmentType.LEFT;
 }
 
+type VideoLink = { filename: string; blob: Blob };
+
 async function buildItemParagraphs(
   item: AlbumItem,
   options: { rtl: boolean; noCaptionLabel: string; videoLabel: string; visibleFields: VisibleFields },
-  isFirst: boolean
+  isFirst: boolean,
+  usedMediaFilenames: Set<string>,
+  videoLinks: VideoLink[]
 ): Promise<Paragraph[]> {
   const { rtl, noCaptionLabel, videoLabel, visibleFields } = options;
   const alignment = paragraphAlignment(rtl);
   const paragraphs: Paragraph[] = [];
 
   if (item.media.type === "video") {
+    const filename = uniqueFilename(sanitizeMediaFilename(item.media.filename), usedMediaFilenames);
+    videoLinks.push({ filename, blob: item.media.blob });
+
     paragraphs.push(
       new Paragraph({
         alignment: AlignmentType.CENTER,
         bidirectional: rtl,
         pageBreakBefore: !isFirst,
-        children: [new TextRun({ text: `🎥 ${videoLabel}: ${item.media.filename}`, size: 24, color: "555555" })],
+        children: [
+          new ExternalHyperlink({
+            link: `media/${filename}`,
+            children: [
+              new TextRun({
+                text: `🎥 ${videoLabel}: ${item.media.filename}`,
+                size: 24,
+                color: "1155CC",
+                underline: {},
+              }),
+            ],
+          }),
+        ],
       })
     );
   } else {
@@ -124,8 +144,12 @@ export async function exportAlbumAsWord(
     children: [new TextRun({ text: options.title })],
   });
 
+  const usedMediaFilenames = new Set<string>();
+  const videoLinks: VideoLink[] = [];
   const itemParagraphLists = await Promise.all(
-    albumItems.map((item, index) => buildItemParagraphs(item, options, index === 0))
+    albumItems.map((item, index) =>
+      buildItemParagraphs(item, options, index === 0, usedMediaFilenames, videoLinks)
+    )
   );
 
   const doc = new Document({
@@ -137,12 +161,35 @@ export async function exportAlbumAsWord(
     ],
   });
 
-  const blob = await Packer.toBlob(doc);
+  const docxBlob = await Packer.toBlob(doc);
+  const safeTitle = sanitizeDownloadFilename(options.title);
+
+  if (videoLinks.length === 0) {
+    downloadBlob(docxBlob, `${safeTitle}.docx`);
+    return;
+  }
+
+  // Videos can't be embedded as playable media in .docx, so they're linked
+  // instead — bundling the document with a sibling media/ folder in a zip
+  // keeps that link resolvable once extracted.
+  const zip = new JSZip();
+  zip.file(`${safeTitle}.docx`, docxBlob);
+  const mediaFolder = zip.folder("media");
+  if (!mediaFolder) throw new Error("Could not create media folder in zip");
+  for (const { filename, blob } of videoLinks) {
+    mediaFolder.file(filename, blob);
+  }
+
+  const zipBlob = await zip.generateAsync({ type: "blob" });
+  downloadBlob(zipBlob, `${safeTitle} (Word).zip`);
+}
+
+function downloadBlob(blob: Blob, fileName: string): void {
   const url = URL.createObjectURL(blob);
   try {
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${sanitizeDownloadFilename(options.title)}.docx`;
+    link.download = fileName;
     document.body.appendChild(link);
     link.click();
     link.remove();
